@@ -1,30 +1,58 @@
-import { CONFIG } from './config.js';
-import L from 'leaflet';
 
-export function createMap()
- {const map = L.map('map', {
-    zoomControl: true, // Enable zoom control
-    preferCanvas: true, // Use canvas rendering for better performance with many markers 
-    maxBoundsViscosiry: 0.5, // Prevents the user from panning too far outside the map bounds
+export function createMap() {
 
-});
+    // Regional boundaries: Yemen + KSA + neighboring region
+    const mapBounds = [
+        [10.0, 34.0],
+        [33.5, 60.5]
+    ];
 
-map.fitBounds(CONFIG.mapBounds, 
-    {padding : [50, 50]}
-); // Fit the map to the specified bounds
+    const bounds = L.latLngBounds(mapBounds);
 
+    // Initialize map
+    const map = L.map("map", {
+        zoomControl: true,
+        preferCanvas: true,
+        maxBounds: bounds,
+        maxBoundsViscosity: 1.0,
+        minZoom: 4,
+        maxZoom: 18,
+        worldCopyJump: false
+    });
 
-map.setMaxBounds(CONFIG.mapBounds); // Set the maximum bounds for the map
-
-
- // Add satellite imagery
-    L.tileLayer(
+    // Satellite imagery
+    const satelliteLayer = L.tileLayer(
         "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
         {
             attribution: "Tiles © Esri",
-            maxZoom: 19
+            maxZoom: 18
         }
-    ).addTo(map);
+    );
+
+    satelliteLayer.addTo(map);
+
+    // Geographic labels and boundaries
+    const labelsLayer = L.tileLayer(
+        "https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+        {
+            attribution: "Labels © Esri",
+            maxZoom: 18,
+            pane: "overlayPane"
+        }
+    );
+
+    labelsLayer.addTo(map);
+
+    // Set regional view
+    map.fitBounds(bounds, {
+        padding: [20, 20]
+    });
+
+    // Prevent zooming out beyond the initial regional view
+    map.setMinZoom(map.getZoom());
+
+    // Keep view inside regional boundaries
+    map.setMaxBounds(bounds);
 
     return map;
 }
